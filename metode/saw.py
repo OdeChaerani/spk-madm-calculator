@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-def normalisasi_matrix(df, tipe): #Normalisasi matriks sesuai tipe kriteria (benefit/cost)
+def normalisasi_matrix(df, tipe):  # Normalisasi matriks sesuai tipe kriteria (benefit/cost)
     matrix = df.values.astype(float)
     norm = np.zeros_like(matrix, dtype=float)
 
@@ -14,7 +14,7 @@ def normalisasi_matrix(df, tipe): #Normalisasi matriks sesuai tipe kriteria (ben
     return norm
 
 
-def normalisasi_bobot(bobot): # Menormalisasi bobot agar total = 1
+def normalisasi_bobot(bobot):  # Menormalisasi bobot agar total = 1
     w = np.array(bobot)
     return w / np.sum(w)
 
@@ -27,5 +27,11 @@ def hitung_saw(df, bobot, tipe):
     norm = normalisasi_matrix(df, tipe)
     w = normalisasi_bobot(bobot)
     skor = np.dot(norm, w)
-    hasil = pd.Series(skor).rank(ascending=False, method='dense').astype(int).sort_values("Ranking")
+
+    hasil = pd.DataFrame({
+        "Alternatif": df.index,
+        "Skor": skor,
+        "Ranking": pd.Series(skor).rank(ascending=False, method='dense').astype(int)
+    }).sort_values("Ranking").reset_index(drop=True)
+
     return hasil
