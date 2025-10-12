@@ -88,8 +88,13 @@ if metode in ["SAW", "WP", "TOPSIS"]:
     # Simpan tipe & bobot di session_state
     if "tipe" not in st.session_state:
         st.session_state.tipe = ["Benefit"] * n_kriteria
+    elif len(st.session_state.tipe) != n_kriteria:
+        st.session_state.tipe = (st.session_state.tipe + ["Benefit"] * n_kriteria)[:n_kriteria]
+
     if "bobot" not in st.session_state:
         st.session_state.bobot = [1.0/n_kriteria] * n_kriteria
+    elif len(st.session_state.bobot) != n_kriteria:
+        st.session_state.bobot = (st.session_state.bobot + [1.0/n_kriteria] * n_kriteria)[:n_kriteria]
 
     with st.expander("Tipe & Bobot Kriteria", expanded=True):
         tipe, bobot = [], []
