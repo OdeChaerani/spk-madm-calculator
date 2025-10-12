@@ -183,15 +183,15 @@ if metode in ["SAW", "WP", "TOPSIS"]:
     st.session_state.df_data = df_data
 
     # Editor — gunakan session_state agar tidak refresh saat input
-    edited_df = st.data_editor(
-        st.session_state.df_data,
-        use_container_width=True,
-        key="data_editor",
-    )
+edited_df = st.data_editor(
+    st.session_state.df_data,
+    use_container_width=True,
+    key="data_editor",
+)
 
-    # Update session_state hanya jika benar-benar berubah
-    if not edited_df.equals(st.session_state.df_data):
-        st.session_state.df_data = edited_df
+# Update session_state hanya jika benar-benar berubah
+if not edited_df.equals(st.session_state.df_data):
+    st.session_state.df_data = edited_df
 
 # ============================================================
 # BAGIAN AHP
