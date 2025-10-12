@@ -133,40 +133,44 @@ if metode in ["SAW", "WP", "TOPSIS"]:
             [[50.0 for _ in range(n_kriteria)] for _ in range(n_alternatif)],
             columns=kriteria, index=alternatif
         )
-    else:
-        # Jika jumlah kriteria/alternatif berubah, sesuaikan ukuran tabel
-        old_df = st.session_state.df_data.copy()
 
-        # Tambah kolom baru jika ada kriteria baru
-        for k in kriteria:
-            if k not in old_df.columns:
-                old_df[k] = 50.0
+    # Jika jumlah kriteria/alternatif berubah, sesuaikan ukuran tabel
+    old_df = st.session_state.df_data.copy()
 
-        # Hapus kolom yang tidak ada di daftar kriteria sekarang
-        old_df = old_df[[c for c in old_df.columns if c in kriteria]]
+    # Tambah kolom baru jika ada kriteria baru
+    for k in kriteria:
+        if k not in old_df.columns:
+            old_df[k] = 50.0
 
-        # Tambah baris baru jika ada alternatif baru
-        for a in alternatif:
-            if a not in old_df.index:
-                old_df.loc[a] = [50.0] * len(kriteria)
+    # Hapus kolom yang tidak ada di daftar kriteria sekarang
+    old_df = old_df[[c for c in old_df.columns if c in kriteria]]
 
-        # Hapus baris yang tidak ada di daftar alternatif sekarang
-        old_df = old_df.loc[[a for a in old_df.index if a in alternatif]]
+    # Tambah baris baru jika ada alternatif baru
+    for a in alternatif:
+        if a not in old_df.index:
+            old_df.loc[a] = [50.0] * len(kriteria)
 
-        # Urutkan ulang sesuai urutan input
-        old_df = old_df.reindex(index=alternatif, columns=kriteria)
+    # Hapus baris yang tidak ada di daftar alternatif sekarang
+    old_df = old_df.loc[[a for a in old_df.index if a in alternatif]]
 
-        st.session_state.df_data = old_df
+    # Urutkan ulang sesuai urutan input
+    old_df = old_df.reindex(index=alternatif, columns=kriteria)
 
-        st.markdown("### Input Nilai Alternatif x Kriteria")
-        df = st.data_editor(
-            st.session_state.df_data,
-            use_container_width=True,
-            num_rows="dynamic",
-            key="data_editor"
-        )
+    st.session_state.df_data = old_df
+
+    st.markdown("### Input Nilai Alternatif x Kriteria")
+
+    # Gunakan data_editor dengan key yang konsisten
+    df = st.data_editor(
+        st.session_state.df_data,
+        use_container_width=True,
+        num_rows="dynamic",
+        key="data_editor_main"
+    )
+
+    # Update session_state setiap kali data berubah
+    if df is not None:
         st.session_state.df_data = df
-
 
     if st.button("Hitung", type="primary"):
         if metode == "SAW":
