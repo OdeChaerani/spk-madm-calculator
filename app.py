@@ -123,7 +123,7 @@ if metode in ["SAW", "WP", "TOPSIS"]:
                 st.session_state.bobot[i] = bobot_val
 
     st.markdown("### Input Nilai Alternatif x Kriteria")
-    
+
     # ============================================================
     # SIMPAN DATAFRAME NILAI ALTERNATIF X KRITERIA
     # ============================================================
@@ -156,8 +156,6 @@ if metode in ["SAW", "WP", "TOPSIS"]:
         old_df = old_df.reindex(index=alternatif, columns=kriteria)
 
         st.session_state.df_data = old_df
-
-        st.markdown("### Input Nilai Alternatif x Kriteria")
         df = st.data_editor(
             st.session_state.df_data,
             use_container_width=True,
