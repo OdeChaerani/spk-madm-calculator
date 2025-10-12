@@ -32,20 +32,28 @@ with st.container():
     st.subheader("Metode Perhitungan")
     col1, col2, col3 = st.columns([1, 2, 1])
 
-    # Simpan metode terakhir di session_state
-    if "metode_aktif" not in st.session_state:
-        st.session_state.metode_aktif = "SAW"
+    metode_list = ["SAW", "WP", "TOPSIS", "AHP"]
 
-    metode = st.selectbox(
+    # Inisialisasi session_state kalau belum ada
+    if "metode_aktif" not in st.session_state:
+        st.session_state.metode_aktif = metode_list[0]
+
+    # Gunakan index berdasarkan metode_aktif
+    metode_index = metode_list.index(st.session_state.metode_aktif)
+
+    # Pilihan metode tanpa key, biar tidak tumpang tindih dengan session_state
+    metode_baru = st.selectbox(
         "**Pilih Metode**",
-        ["SAW", "WP", "TOPSIS", "AHP"],
-        index=["SAW", "WP", "TOPSIS", "AHP"].index(st.session_state.metode_aktif),
-        key="metode_select"
+        metode_list,
+        index=metode_index
     )
 
-    # Update metode aktif
-    if metode != st.session_state.metode_aktif:
-        st.session_state.metode_aktif = metode
+    # Langsung update session_state bila berubah
+    if metode_baru != st.session_state.metode_aktif:
+        st.session_state.metode_aktif = metode_baru
+        st.rerun()  # paksa rerun biar langsung pindah tanpa klik dua kali
+
+    metode = st.session_state.metode_aktif
 
 # ============================================================
 # INPUT JUMLAH KRITERIA DAN ALTERNATIF
