@@ -17,8 +17,6 @@ def hitung_saw(df, bobot, tipe):
             col = np.where(matrix[:, j] == 0, 1e-9, matrix[:, j])
             norm[:, j] = np.min(col) / col
 
-    df_norm = pd.DataFrame(norm, columns=df.columns, index=df.index)
-
     # --- Normalisasi bobot ---
     w = np.array(bobot) / np.sum(bobot)
 
@@ -33,4 +31,4 @@ def hitung_saw(df, bobot, tipe):
     hasil["Ranking"] = hasil["Skor"].rank(ascending=False, method="dense").astype(int)
     hasil = hasil.sort_values("Ranking").reset_index(drop=True)
 
-    return hasil, df_norm
+    return hasil
