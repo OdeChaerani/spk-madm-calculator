@@ -13,19 +13,17 @@ def normalisasi_matrix(df, tipe):  # Normalisasi matriks sesuai tipe kriteria (b
             norm[:, j] = np.min(col) / col
     return norm
 
-
-def normalisasi_bobot(bobot):  # Menormalisasi bobot agar total = 1
-    w = np.array(bobot)
-    return w / np.sum(w)
-
-
 def hitung_saw(df, bobot, tipe):
     """Fungsi utama untuk menghitung SAW."""
     if len(bobot) != df.shape[1] or len(tipe) != df.shape[1]:
         raise ValueError("Jumlah bobot dan tipe harus sama dengan jumlah kolom di dataframe")
 
     norm = normalisasi_matrix(df, tipe)
-    w = normalisasi_bobot(bobot)
+    w = np.array(bobot)
+
+    if not np.isclose(np.sum(w), 1.0):
+       w = w / np.sum(w)
+
     skor = np.dot(norm, w)
 
     hasil = pd.DataFrame({
