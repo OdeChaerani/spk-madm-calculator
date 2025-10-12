@@ -70,6 +70,7 @@ st.markdown("---")
 # BAGIAN SAW / WP / TOPSIS
 # ============================================================
 if metode in ["SAW", "WP", "TOPSIS"]:
+    st.subheader("Input Tipe & Bobot Kriteria")
     with st.expander("Tipe & Bobot Kriteria", expanded=True):
         tipe, bobot = [], []
         for i in range(n_kriteria):
@@ -126,9 +127,10 @@ elif metode == "AHP":
 
     matriks_kriteria = df_matrix.values.tolist()
     matriks_alternatif = []
-
+    
+    st.markdown("### Matriks Perbandingan Alternatif")
     for k in range(n_kriteria):
-        with st.expander(f"**Matriks Perbandingan Alternatif (Kriteria {kriteria[k]})**", expanded=False):
+        with st.expander(f"**Kriteria {kriteria[k]}**", expanded=False):
             df_alt = pd.DataFrame(
                 [[1.0 if i == j else 1.0 for j in range(n_alternatif)] for i in range(n_alternatif)],
                 columns=alternatif, index=alternatif
