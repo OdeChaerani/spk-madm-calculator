@@ -176,9 +176,28 @@ if metode in ["SAW", "WP", "TOPSIS"]:
         key=f"data_editor_{metode}",
     )
 
-    # 🔹 5. Hanya update session_state kalau nilai betul-betul berubah
-    if not edited_df.equals(st.session_state[df_key]):
-        st.session_state[df_key] = edited_df
+    # 🔹 5. Merge hasil edit ke data lama biar gak hilang baris yang tidak ter-update
+    old_df = st.session_state[df_key].copy()
+
+    # Pastikan ukuran sama
+    for col in old_df.columns:
+        if col not in edited_df.columns:
+            edited_df[col] = old_df[col]
+    for col in edited_df.columns:
+        if col not in old_df.columns:
+            old_df[col] = edited_df[col]
+
+    # Merge cell by cell (edited_df lebih prioritas)
+    merged_df = old_df.copy()
+    for r in edited_df.index:
+        for c in edited_df.columns:
+            val = edited_df.at[r, c]
+            if not pd.isna(val):
+                merged_df.at[r, c] = val
+
+    # Update session_state hanya jika berbeda
+    if not merged_df.equals(st.session_state[df_key]):
+        st.session_state[df_key] = merged_df
 
 # ============================================================
 # BAGIAN AHP
