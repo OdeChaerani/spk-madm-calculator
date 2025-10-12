@@ -158,14 +158,14 @@ if metode in ["SAW", "WP", "TOPSIS"]:
 
         st.session_state.df_data = old_df
 
-    st.markdown("### Input Nilai Alternatif x Kriteria")
-    df = st.data_editor(
-        st.session_state.df_data,
-        use_container_width=True,
-        num_rows="dynamic",
-        key="data_editor"
-    )
-    st.session_state.df_data = df
+        st.markdown("### Input Nilai Alternatif x Kriteria")
+        df = st.data_editor(
+            st.session_state.df_data,
+            use_container_width=True,
+            num_rows="dynamic",
+            key="data_editor"
+        )
+        st.session_state.df_data = df
 
 
     if st.button("Hitung", type="primary"):
