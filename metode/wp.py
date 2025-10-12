@@ -1,22 +1,29 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 def hitung_wp(df, bobot, tipe):
     matrix = df.values.astype(float)
-    w = np.array(bobot) / sum(bobot)
-    
-    s = np.ones(len(matrix))
+    w = np.array(bobot) / np.sum(bobot)
+
+    # hitung log S untuk stabilitas
+    log_s = np.zeros(len(matrix))
     for i in range(len(matrix)):
         for j in range(len(w)):
-            if tipe[j] == "benefit":
-                s[i] *= matrix[i, j] ** w[j]
-            else:
-                s[i] *= (1 / matrix[i, j]) ** w[j]
-    
+            x = matrix[i, j]
+            if x <= 0:
+                x = 1e-9  # jaga keamanan jika ada nol
+            if tipe[j].lower() == "benefit":
+                log_s[i] += w[j] * np.log(x)
+            else:  # cost
+                log_s[i] += w[j] * np.log(1.0 / x)
+
+    s = np.exp(log_s)
     v = s / np.sum(s)
+
     hasil = pd.DataFrame({
         "Alternatif": df.index,
-        "Skor": v,
-        "Ranking": pd.Series(v).rank(ascending=False).astype(int)
-    }).sort_values("Ranking")
+        "Skor": v
+    })
+    hasil["Ranking"] = hasil["Skor"].rank(ascending=False, method="dense").astype(int)
+    hasil = hasil.sort_values("Ranking").reset_index(drop=True)
     return hasil

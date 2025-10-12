@@ -5,24 +5,30 @@ from metode.wp import hitung_wp
 from metode.topsis import hitung_topsis
 from metode.ahp import hitung_ahp
 
-# Layout tidak full layar
-st.set_page_config(page_title="MCDM App", layout="centered")
+def highlight_rank1(row):
+    """Memberi warna kuning pada baris dengan peringkat 1"""
+    if 'Ranking' in row and row['Ranking'] == 1:
+        return ['background-color: lightgreen; font-weight: bold'] * len(row)
+    else:
+        return [''] * len(row)
+
+st.set_page_config(page_title="Kalkulator MCDM", layout="centered")
 
 # Judul utama
-st.title("🧮 Aplikasi Pengambilan Keputusan Multi Kriteria (MCDM)")
+st.title("Aplikasi Pengambilan Keputusan Multi Kriteria (MCDM)")
 st.markdown("---")
 
 # Pilihan metode  di tengah
-st.markdown("### Pilih Metode Perhitungan")
+st.markdown("### Metode Perhitungan")
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    metode = st.selectbox("Pilih Metode:", ["SAW", "WP", "TOPSIS", "AHP"])
+    metode = st.selectbox("**Pilih Metode**", ["SAW", "WP", "TOPSIS", "AHP"])
 
 col1, col2 = st.columns([1, 1])
 with col1:
-    n_kriteria = st.number_input("Jumlah Kriteria", 1, 10, 3, key="kriteria")
+    n_kriteria = st.number_input("**Jumlah Kriteria**", 1, 10, 3, key="kriteria")
 with col2:
-    n_alternatif = st.number_input("Jumlah Alternatif", 1, 10, 3, key="alternatif")
+    n_alternatif = st.number_input("**Jumlah Alternatif**", 1, 10, 3, key="alternatif")
 
 st.markdown("---")
 
@@ -48,19 +54,19 @@ st.markdown("---")
 # ============================================================
 if metode in ["SAW", "WP", "TOPSIS"]:
     with st.container():
-        st.subheader("Input Jenis & Bobot Kriteria")
+        st.subheader("Input Tipe & Bobot Kriteria")
         tipe = []
         bobot = []
         for i in range(n_kriteria):
             col1, col2 = st.columns(2)
             with col1:
-                tipe.append(st.selectbox(f"Jenis {kriteria[i]}", ["benefit", "cost"], key=f"type{i}"))
+                tipe.append(st.selectbox(f"Tipe {kriteria[i]}", ["Benefit", "Cost"], key=f"type{i}"))
             with col2:
                 if metode == "WP":
                     bobot.append(st.number_input(f"Bobot {kriteria[i]}", min_value=0.0, value=1.0, step=0.1, key=f"bobot{i}"))
                 else:
                     bobot.append(st.number_input(f"Bobot {kriteria[i]}", min_value=0.0, max_value=1.0, value=1.0/n_kriteria, step=0.01, key=f"bobot{i}"))
-        st.subheader("Input Nilai Alternatif × Kriteria")
+        st.subheader("Input Nilai Alternatif x Kriteria")
 
         # Membuat DataFrame awal
         df_default = pd.DataFrame(
@@ -77,10 +83,10 @@ if metode in ["SAW", "WP", "TOPSIS"]:
             key="data_editor"
         )
 
-        st.write("### Matriks Keputusan")
-        st.dataframe(df, use_container_width=True)
+        # st.write("### Matriks Keputusan")
+        # st.dataframe(df, use_container_width=True)
 
-        if st.button("🔢 Hitung"):
+        if st.button("Hitung"):
             if metode == "SAW":
                 hasil = hitung_saw(df, bobot, tipe)
             elif metode == "WP":
@@ -90,8 +96,10 @@ if metode in ["SAW", "WP", "TOPSIS"]:
                 st.subheader("Solusi Ideal (A⁺ dan A⁻)")
                 st.dataframe(solusi_ideal, use_container_width=True)
 
-            st.subheader("📊 Hasil Perhitungan dan Ranking")
-            st.dataframe(hasil, use_container_width=True)
+            st.subheader("Hasil Perhitungan dan Ranking")
+            styled_df = hasil.style.apply(highlight_rank1, axis=1)
+            st.markdown(styled_df.to_html(), unsafe_allow_html=True)
+
 
 # ============================================================
 # METODE AHP
@@ -99,13 +107,10 @@ if metode in ["SAW", "WP", "TOPSIS"]:
 elif metode == "AHP":
     with st.container():
         st.subheader("Input Jenis Kriteria (Benefit/Cost)")
-        tipe = [st.selectbox(f"Jenis {kriteria[i]}", ["benefit", "cost"], key=f"type{i}") for i in range(n_kriteria)]
+        tipe = [st.selectbox(f"Tipe {kriteria[i]}", ["Benefit", "Cost"], key=f"type{i}") for i in range(n_kriteria)]
+        st.markdown("---")
 
         st.markdown("### Matriks Perbandingan Antar Kriteria")
-        st.markdown(
-            "Isikan nilai **perbandingan berpasangan antar kriteria** (skala 1–9). "
-            "Bagian bawah tabel otomatis dihitung sebagai kebalikannya."
-        )
 
         # Buat matriks default
         df_matrix = pd.DataFrame([[1.0 if i == j else 1.0 for j in range(n_kriteria)] for i in range(n_kriteria)],
@@ -120,8 +125,9 @@ elif metode == "AHP":
                 )
                 df_matrix.iloc[j, i] = round(1 / df_matrix.iloc[i, j], 4)
 
-        st.write("📋 Matriks Perbandingan Kriteria")
+        st.write("**Tabel Matriks Perbandingan Kriteria**")
         st.dataframe(df_matrix, use_container_width=True)
+        st.markdown("---")
 
         # Simpan matriks ke list of lists untuk hitung
         matriks_kriteria = df_matrix.values.tolist()
@@ -131,8 +137,8 @@ elif metode == "AHP":
         # ============================================================
         matriks_alternatif = []
         for k in range(n_kriteria):
-            st.markdown(f"### Matriks Perbandingan Alternatif untuk Kriteria **{kriteria[k]}**")
-            st.markdown("Isi nilai pada segitiga atas, bagian bawah otomatis diisi kebalikannya.")
+            st.markdown(f"### Matriks Perbandingan Alternatif (Kriteria **{kriteria[k]}**)")
+            st.markdown("Isi nilai pada segitiga atas, bagian bawah akan otomatis terisi kebalikannya.")
 
             df_alt = pd.DataFrame(
                 [[1.0 if i == j else 1.0 for j in range(n_alternatif)] for i in range(n_alternatif)],
@@ -150,13 +156,17 @@ elif metode == "AHP":
             st.dataframe(df_alt, use_container_width=True)
             matriks_alternatif.append(df_alt.values.tolist())
 
-        if st.button("🔢 Hitung"):
+        if st.button("Hitung"):
             hasil = hitung_ahp(kriteria, matriks_kriteria, alternatif, matriks_alternatif)
 
             st.subheader("📘 Bobot Kriteria")
             st.write(pd.DataFrame({"Kriteria": kriteria, "Bobot": hasil["bobot_kriteria"]}))
-            st.write(f"CR Kriteria = {hasil['cr_kriteria']:.3f} "
-                     f"{'✅ (Konsisten)' if hasil['cr_kriteria'] <= 0.1 else '⚠️ (Tidak Konsisten)'}")
+            cr_krit = hasil['cr_kriteria']
+            status_krit = "Konsisten" if cr_krit <= 0.1 else "Tidak Konsisten"
+            warna_krit = "green" if cr_krit <= 0.1 else "red"
+            st.markdown(f"**CR Kriteria = {cr_krit:.3f}** "
+                f"<span style='color:{warna_krit}; font-weight:bold'>({status_krit})</span>", unsafe_allow_html=True)
+
 
             for i, k in enumerate(kriteria):
                 st.write(f"### Bobot Lokal Alternatif untuk {k}")
@@ -165,8 +175,12 @@ elif metode == "AHP":
                     "Bobot": hasil["bobot_alternatif_lokal"][i]
                 })
                 st.dataframe(df_alt)
-                st.write(f"CR = {hasil['cr_alternatif'][i]:.3f} "
-                         f"{'✅ (Konsisten)' if hasil['cr_alternatif'][i] <= 0.1 else '⚠️ (Tidak Konsisten)'}")
+                cr_alt = hasil['cr_alternatif'][i]
+                status_alt = "Konsisten" if cr_alt <= 0.1 else "Tidak Konsisten"
+                warna_alt = "green" if cr_alt <= 0.1 else "red"
+                st.markdown(f"**CR = {cr_alt:.3f}** "
+                    f"<span style='color:{warna_alt}; font-weight:bold'>({status_alt})</span>", unsafe_allow_html=True)
 
-            st.subheader("📊 Hasil Akhir dan Ranking Global")
-            st.dataframe(hasil["hasil_df"], use_container_width=True)
+            st.subheader("Hasil Akhir dan Ranking Global")
+            styled_df_ahp = hasil["hasil_df"].style.apply(highlight_rank1, axis=1)
+            st.markdown(styled_df_ahp.to_html(), unsafe_allow_html=True)
