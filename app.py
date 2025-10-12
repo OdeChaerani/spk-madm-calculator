@@ -31,8 +31,21 @@ st.markdown("---")
 with st.container():
     st.subheader("Metode Perhitungan")
     col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        metode = st.selectbox("**Pilih Metode**", ["SAW", "WP", "TOPSIS", "AHP"])
+
+    # Simpan metode terakhir di session_state
+    if "metode_aktif" not in st.session_state:
+        st.session_state.metode_aktif = "SAW"
+
+    metode = st.selectbox(
+        "**Pilih Metode**",
+        ["SAW", "WP", "TOPSIS", "AHP"],
+        index=["SAW", "WP", "TOPSIS", "AHP"].index(st.session_state.metode_aktif),
+        key="metode_select"
+    )
+
+    # Update metode aktif
+    if metode != st.session_state.metode_aktif:
+        st.session_state.metode_aktif = metode
 
 # ============================================================
 # INPUT JUMLAH KRITERIA DAN ALTERNATIF
@@ -51,7 +64,7 @@ st.markdown("---")
 # INPUT NAMA KRITERIA & ALTERNATIF
 # ============================================================
 st.subheader("Nama Kriteria")
-cols_kriteria = st.columns(3)  # tampilkan 3 kolom sejajar
+cols_kriteria = st.columns(3)
 kriteria = []
 for i in range(n_kriteria):
     with cols_kriteria[i % 3]:
@@ -71,22 +84,55 @@ st.markdown("---")
 # ============================================================
 if metode in ["SAW", "WP", "TOPSIS"]:
     st.subheader("Input Tipe & Bobot Kriteria")
+
+    # Simpan tipe & bobot di session_state
+    if "tipe" not in st.session_state:
+        st.session_state.tipe = ["Benefit"] * n_kriteria
+    if "bobot" not in st.session_state:
+        st.session_state.bobot = [1.0/n_kriteria] * n_kriteria
+
     with st.expander("Tipe & Bobot Kriteria", expanded=True):
         tipe, bobot = [], []
         for i in range(n_kriteria):
             col1, col2 = st.columns(2)
             with col1:
-                tipe.append(st.selectbox(f"Tipe {kriteria[i]}", ["Benefit", "Cost"], key=f"type{i}"))
+                tipe_val = st.selectbox(
+                    f"Tipe {kriteria[i]}",
+                    ["Benefit", "Cost"],
+                    index=["Benefit", "Cost"].index(st.session_state.tipe[i]),
+                    key=f"type{i}"
+                )
+                tipe.append(tipe_val)
+                st.session_state.tipe[i] = tipe_val
+
             with col2:
-                default_val = 1.0/n_kriteria if metode != "WP" else 1.0
-                bobot.append(st.number_input(f"Bobot {kriteria[i]}", min_value=0.0, value=default_val, step=0.01, key=f"bobot{i}"))
+                default_val = st.session_state.bobot[i]
+                bobot_val = st.number_input(
+                    f"Bobot {kriteria[i]}",
+                    min_value=0.0,
+                    value=float(default_val),
+                    step=0.01,
+                    key=f"bobot{i}"
+                )
+                bobot.append(bobot_val)
+                st.session_state.bobot[i] = bobot_val
 
     st.markdown("### Input Nilai Alternatif x Kriteria")
-    df_default = pd.DataFrame(
-        [[50.0 for _ in range(n_kriteria)] for _ in range(n_alternatif)],
-        columns=kriteria, index=alternatif
+
+    # Simpan DataFrame alternatif x kriteria di session_state
+    if "df_data" not in st.session_state:
+        st.session_state.df_data = pd.DataFrame(
+            [[50.0 for _ in range(n_kriteria)] for _ in range(n_alternatif)],
+            columns=kriteria, index=alternatif
+        )
+
+    df = st.data_editor(
+        st.session_state.df_data,
+        use_container_width=True,
+        num_rows="dynamic",
+        key="data_editor"
     )
-    df = st.data_editor(df_default, use_container_width=True, num_rows="dynamic", key="data_editor")
+    st.session_state.df_data = df
 
     if st.button("Hitung", type="primary"):
         if metode == "SAW":
