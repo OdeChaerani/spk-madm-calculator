@@ -30,30 +30,18 @@ st.markdown("---")
 # ============================================================
 with st.container():
     st.subheader("Metode Perhitungan")
-    col1, col2, col3 = st.columns([1, 2, 1])
-
     metode_list = ["SAW", "WP", "TOPSIS", "AHP"]
 
-    # Inisialisasi session_state kalau belum ada
     if "metode_aktif" not in st.session_state:
         st.session_state.metode_aktif = metode_list[0]
 
-    # Gunakan index berdasarkan metode_aktif
-    metode_index = metode_list.index(st.session_state.metode_aktif)
-
-    # Pilihan metode tanpa key, biar tidak tumpang tindih dengan session_state
-    metode_baru = st.selectbox(
+    metode = st.selectbox(
         "**Pilih Metode**",
         metode_list,
-        index=metode_index
+        index=metode_list.index(st.session_state.metode_aktif),
+        key="pilih_metode"
     )
-
-    # Langsung update session_state bila berubah
-    if metode_baru != st.session_state.metode_aktif:
-        st.session_state.metode_aktif = metode_baru
-        st.rerun()  # paksa rerun biar langsung pindah tanpa klik dua kali
-
-    metode = st.session_state.metode_aktif
+    st.session_state.metode_aktif = metode
 
 # ============================================================
 # INPUT JUMLAH KRITERIA DAN ALTERNATIF
@@ -151,16 +139,19 @@ if metode in ["SAW", "WP", "TOPSIS"]:
     # SIMPAN DATAFRAME NILAI ALTERNATIF X KRITERIA
     # ============================================================
     # Inisialisasi df_data hanya sekali
-    if "df_data" not in st.session_state:
-        st.session_state.df_data = pd.DataFrame(
+    df_key = f"df_data_{metode}"
+
+    # Inisialisasi dataframe hanya sekali per metode
+    if df_key not in st.session_state:
+        st.session_state[df_key] = pd.DataFrame(
             [[50.0 for _ in range(n_kriteria)] for _ in range(n_alternatif)],
             columns=kriteria, index=alternatif
         )
 
-    # Sinkronisasi kolom dan index hanya kalau jumlah berubah
-    df_data = st.session_state.df_data.copy()
+    # Sinkronisasi kolom & index hanya jika jumlah berubah
+    df_data = st.session_state[df_key].copy()
 
-    # Tambah kolom baru (kriteria baru)
+    # Tambah kolom baru
     for k in kriteria:
         if k not in df_data.columns:
             df_data[k] = 50.0
@@ -168,30 +159,30 @@ if metode in ["SAW", "WP", "TOPSIS"]:
     # Hapus kolom yang tidak ada lagi
     df_data = df_data[[c for c in df_data.columns if c in kriteria]]
 
-    # Tambah baris baru (alternatif baru)
+    # Tambah baris baru
     for a in alternatif:
         if a not in df_data.index:
             df_data.loc[a] = [50.0] * len(kriteria)
 
-    # Hapus baris yang tidak ada lagi
+    # Hapus baris lama
     df_data = df_data.loc[[a for a in df_data.index if a in alternatif]]
 
     # Urutkan ulang
     df_data = df_data.reindex(index=alternatif, columns=kriteria)
 
-    # Simpan balik ke session_state
-    st.session_state.df_data = df_data
+    # Simpan kembali
+    st.session_state[df_key] = df_data
 
-    # Editor — gunakan session_state agar tidak refresh saat input
-edited_df = st.data_editor(
-    st.session_state.df_data,
-    use_container_width=True,
-    key="data_editor",
-)
+    st.markdown("### Input Nilai Alternatif x Kriteria")
+    edited_df = st.data_editor(
+        st.session_state[df_key],
+        use_container_width=True,
+        key=f"data_editor_{metode}",  # key unik biar gak bentrok antar metode
+    )
 
-# Update session_state hanya jika benar-benar berubah
-if not edited_df.equals(st.session_state.df_data):
-    st.session_state.df_data = edited_df
+    # Update data hanya jika berubah
+    if not edited_df.equals(st.session_state[df_key]):
+        st.session_state[df_key] = edited_df
 
 # ============================================================
 # BAGIAN AHP
