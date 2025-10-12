@@ -138,49 +138,45 @@ if metode in ["SAW", "WP", "TOPSIS"]:
     # ============================================================
     # SIMPAN DATAFRAME NILAI ALTERNATIF X KRITERIA
     # ============================================================
-    # Inisialisasi df_data hanya sekali
     df_key = f"df_data_{metode}"
 
-    # Inisialisasi dataframe hanya sekali per metode
+    # 🔹 1. Inisialisasi HANYA SEKALI (pertama kali metode digunakan)
     if df_key not in st.session_state:
         st.session_state[df_key] = pd.DataFrame(
             [[50.0 for _ in range(n_kriteria)] for _ in range(n_alternatif)],
-            columns=kriteria, index=alternatif
+            columns=[f"C{i+1}" for i in range(n_kriteria)],
+            index=[f"A{i+1}" for i in range(n_alternatif)],
         )
 
-    # Sinkronisasi kolom & index hanya jika jumlah berubah
+    # 🔹 2. Ambil data lama dan sinkronisasi dengan input baru
     df_data = st.session_state[df_key].copy()
 
-    # Tambah kolom baru
+    # Jika nama kolom (kriteria) berubah → sinkronisasi bentuk tanpa hapus data lama
     for k in kriteria:
         if k not in df_data.columns:
             df_data[k] = 50.0
-
-    # Hapus kolom yang tidak ada lagi
     df_data = df_data[[c for c in df_data.columns if c in kriteria]]
 
-    # Tambah baris baru
+    # Jika alternatif berubah → sinkronisasi index
     for a in alternatif:
         if a not in df_data.index:
             df_data.loc[a] = [50.0] * len(kriteria)
-
-    # Hapus baris lama
     df_data = df_data.loc[[a for a in df_data.index if a in alternatif]]
 
-    # Urutkan ulang
-    df_data = df_data.reindex(index=alternatif, columns=kriteria)
-
-    # Simpan kembali
+    # 🔹 3. Simpan kembali hasil sinkronisasi sebelum tampil
     st.session_state[df_key] = df_data
 
     st.markdown("### Input Nilai Alternatif x Kriteria")
+
+    # 🔹 4. Render editor DENGAN key statis per metode (biar gak re-init tiap rerun)
     edited_df = st.data_editor(
         st.session_state[df_key],
         use_container_width=True,
-        key=f"data_editor_{metode}",  # key unik biar gak bentrok antar metode
+        num_rows="dynamic",
+        key=f"data_editor_{metode}",
     )
 
-    # Update data hanya jika berubah
+    # 🔹 5. Hanya update session_state kalau nilai betul-betul berubah
     if not edited_df.equals(st.session_state[df_key]):
         st.session_state[df_key] = edited_df
 
