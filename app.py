@@ -150,53 +150,48 @@ if metode in ["SAW", "WP", "TOPSIS"]:
     # ============================================================
     # SIMPAN DATAFRAME NILAI ALTERNATIF X KRITERIA
     # ============================================================
+    # Inisialisasi df_data hanya sekali
     if "df_data" not in st.session_state:
         st.session_state.df_data = pd.DataFrame(
             [[50.0 for _ in range(n_kriteria)] for _ in range(n_alternatif)],
             columns=kriteria, index=alternatif
         )
-    else:
-        # Pastikan kolom dan index selalu sinkron dengan input
-        old_df = st.session_state.df_data.copy()
 
-        for k in kriteria:
-            if k not in old_df.columns:
-                old_df[k] = 50.0
-        old_df = old_df[[c for c in old_df.columns if c in kriteria]]
+    # Sinkronisasi kolom dan index hanya kalau jumlah berubah
+    df_data = st.session_state.df_data.copy()
 
-        for a in alternatif:
-            if a not in old_df.index:
-                old_df.loc[a] = [50.0] * len(kriteria)
-        old_df = old_df.loc[[a for a in old_df.index if a in alternatif]]
+    # Tambah kolom baru (kriteria baru)
+    for k in kriteria:
+        if k not in df_data.columns:
+            df_data[k] = 50.0
 
-        # Urutkan ulang
-        st.session_state.df_data = old_df.reindex(index=alternatif, columns=kriteria)
+    # Hapus kolom yang tidak ada lagi
+    df_data = df_data[[c for c in df_data.columns if c in kriteria]]
 
-    st.markdown("### Input Nilai Alternatif x Kriteria")
-    df = st.data_editor(
+    # Tambah baris baru (alternatif baru)
+    for a in alternatif:
+        if a not in df_data.index:
+            df_data.loc[a] = [50.0] * len(kriteria)
+
+    # Hapus baris yang tidak ada lagi
+    df_data = df_data.loc[[a for a in df_data.index if a in alternatif]]
+
+    # Urutkan ulang
+    df_data = df_data.reindex(index=alternatif, columns=kriteria)
+
+    # Simpan balik ke session_state
+    st.session_state.df_data = df_data
+
+    # Editor — gunakan session_state agar tidak refresh saat input
+    edited_df = st.data_editor(
         st.session_state.df_data,
         use_container_width=True,
-        num_rows="dynamic",
-        key="data_editor"
+        key="data_editor",
     )
 
-    # Perbarui session_state hanya sekali setelah edit
-    if not df.equals(st.session_state.df_data):
-        st.session_state.df_data = df
-
-    if st.button("Hitung", type="primary"):
-        if metode == "SAW":
-            hasil = hitung_saw(df, bobot, tipe)
-        elif metode == "WP":
-            hasil = hitung_wp(df, bobot, tipe)
-        elif metode == "TOPSIS":
-            hasil, solusi_ideal = hitung_topsis(df, bobot, tipe)
-            st.subheader("Solusi Ideal (A⁺ dan A⁻)")
-            st.dataframe(solusi_ideal, use_container_width=True)
-
-        st.subheader("Hasil Perhitungan dan Ranking")
-        styled_df = hasil.style.apply(highlight_rank1, axis=1)
-        st.markdown(styled_df.to_html(), unsafe_allow_html=True)
+    # Update session_state hanya jika benar-benar berubah
+    if not edited_df.equals(st.session_state.df_data):
+        st.session_state.df_data = edited_df
 
 # ============================================================
 # BAGIAN AHP
