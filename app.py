@@ -32,7 +32,6 @@ with st.container():
     st.subheader("Metode Perhitungan")
     col1, col2, col3 = st.columns([1, 2, 1])
 
-    # Simpan metode terakhir di session_state
     if "metode_aktif" not in st.session_state:
         st.session_state.metode_aktif = "SAW"
 
@@ -43,7 +42,6 @@ with st.container():
         key="metode_select"
     )
 
-    # Update metode aktif
     if metode != st.session_state.metode_aktif:
         st.session_state.metode_aktif = metode
 
@@ -61,6 +59,19 @@ with st.container():
 st.markdown("---")
 
 # ============================================================
+# INISIALISASI NAMA KRITERIA & ALTERNATIF DI SESSION STATE
+# ============================================================
+if "nama_kriteria" not in st.session_state:
+    st.session_state.nama_kriteria = [f"C{i+1}" for i in range(n_kriteria)]
+elif len(st.session_state.nama_kriteria) != n_kriteria:
+    st.session_state.nama_kriteria = (st.session_state.nama_kriteria + [f"C{i+1}" for i in range(n_kriteria)])[:n_kriteria]
+
+if "nama_alternatif" not in st.session_state:
+    st.session_state.nama_alternatif = [f"A{i+1}" for i in range(n_alternatif)]
+elif len(st.session_state.nama_alternatif) != n_alternatif:
+    st.session_state.nama_alternatif = (st.session_state.nama_alternatif + [f"A{i+1}" for i in range(n_alternatif)])[:n_alternatif]
+
+# ============================================================
 # INPUT NAMA KRITERIA & ALTERNATIF
 # ============================================================
 st.subheader("Nama Kriteria")
@@ -68,14 +79,18 @@ cols_kriteria = st.columns(3)
 kriteria = []
 for i in range(n_kriteria):
     with cols_kriteria[i % 3]:
-        kriteria.append(st.text_input(f"Kriteria {i+1}", f"C{i+1}"))
+        nama = st.text_input(f"Kriteria {i+1}", st.session_state.nama_kriteria[i], key=f"krit_input_{i}")
+        kriteria.append(nama)
+        st.session_state.nama_kriteria[i] = nama
 
 st.subheader("Nama Alternatif")
 cols_alt = st.columns(3)
 alternatif = []
 for i in range(n_alternatif):
     with cols_alt[i % 3]:
-        alternatif.append(st.text_input(f"Alternatif {i+1}", f"A{i+1}"))
+        nama = st.text_input(f"Alternatif {i+1}", st.session_state.nama_alternatif[i], key=f"alt_input_{i}")
+        alternatif.append(nama)
+        st.session_state.nama_alternatif[i] = nama
         
 st.markdown("---")
 
@@ -124,61 +139,61 @@ if metode in ["SAW", "WP", "TOPSIS"]:
 
     st.markdown("### Input Nilai Alternatif x Kriteria")
 
-    # Simpan DataFrame alternatif x kriteria di session_state
     # ============================================================
-    # SIMPAN DATAFRAME NILAI ALTERNATIF X KRITERIA
+    # SIMPAN DATAFRAME - BAGIAN KRITIS
     # ============================================================
     if "df_data" not in st.session_state:
         st.session_state.df_data = pd.DataFrame(
             [[50.0 for _ in range(n_kriteria)] for _ in range(n_alternatif)],
             columns=kriteria, index=alternatif
         )
+    else:
+        # Cek apakah ada perubahan kriteria atau alternatif
+        old_df = st.session_state.df_data.copy()
+        
+        # Jika kolom berbeda, sesuaikan
+        if list(old_df.columns) != kriteria:
+            # Pertahankan data lama yang masih ada
+            for k in kriteria:
+                if k not in old_df.columns:
+                    old_df[k] = 50.0
+            
+            # Hapus kolom yang sudah tidak ada
+            old_df = old_df[[c for c in old_df.columns if c in kriteria]]
+            old_df = old_df[kriteria]  # Atur urutan sesuai kriteria terbaru
+        
+        # Jika index berbeda, sesuaikan
+        if list(old_df.index) != alternatif:
+            # Pertahankan data lama
+            for a in alternatif:
+                if a not in old_df.index:
+                    old_df.loc[a] = [50.0] * len(kriteria)
+            
+            # Hapus index yang sudah tidak ada
+            old_df = old_df.loc[[a for a in old_df.index if a in alternatif]]
+            old_df = old_df.reindex(alternatif)
+        
+        st.session_state.df_data = old_df
 
-    # Jika jumlah kriteria/alternatif berubah, sesuaikan ukuran tabel
-    old_df = st.session_state.df_data.copy()
-
-    # Tambah kolom baru jika ada kriteria baru
-    for k in kriteria:
-        if k not in old_df.columns:
-            old_df[k] = 50.0
-
-    # Hapus kolom yang tidak ada di daftar kriteria sekarang
-    old_df = old_df[[c for c in old_df.columns if c in kriteria]]
-
-    # Tambah baris baru jika ada alternatif baru
-    for a in alternatif:
-        if a not in old_df.index:
-            old_df.loc[a] = [50.0] * len(kriteria)
-
-    # Hapus baris yang tidak ada di daftar alternatif sekarang
-    old_df = old_df.loc[[a for a in old_df.index if a in alternatif]]
-
-    # Urutkan ulang sesuai urutan input
-    old_df = old_df.reindex(index=alternatif, columns=kriteria)
-
-    st.session_state.df_data = old_df
-
-    st.markdown("### Input Nilai Alternatif x Kriteria")
-
-    # Gunakan data_editor dengan key yang konsisten
+    # Data editor
     df = st.data_editor(
         st.session_state.df_data,
         use_container_width=True,
-        num_rows="dynamic",
         key="data_editor_main"
     )
 
-    # Update session_state setiap kali data berubah
-    if df is not None:
-        st.session_state.df_data = df
+    # UPDATE PENTING: Simpan perubahan dari data_editor ke session_state
+    if df is not None and not df.equals(st.session_state.df_data):
+        st.session_state.df_data = df.copy()
 
     if st.button("Hitung", type="primary"):
+        # Gunakan session_state.df_data yang sudah ter-update
         if metode == "SAW":
-            hasil = hitung_saw(df, bobot, tipe)
+            hasil = hitung_saw(st.session_state.df_data, bobot, tipe)
         elif metode == "WP":
-            hasil = hitung_wp(df, bobot, tipe)
+            hasil = hitung_wp(st.session_state.df_data, bobot, tipe)
         elif metode == "TOPSIS":
-            hasil, solusi_ideal = hitung_topsis(df, bobot, tipe)
+            hasil, solusi_ideal = hitung_topsis(st.session_state.df_data, bobot, tipe)
             st.subheader("Solusi Ideal (A⁺ dan A⁻)")
             st.dataframe(solusi_ideal, use_container_width=True)
 
@@ -187,7 +202,7 @@ if metode in ["SAW", "WP", "TOPSIS"]:
         st.markdown(styled_df.to_html(), unsafe_allow_html=True)
 
 # ============================================================
-# BAGIAN AHP
+# BAGIAN AHP (tetap sama)
 # ============================================================
 elif metode == "AHP":
     st.subheader("Tipe Kriteria")
