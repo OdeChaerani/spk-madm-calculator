@@ -30,46 +30,33 @@ st.markdown("---")
 # ============================================================
 with st.container():
     st.subheader("Metode Perhitungan")
-    metode_list = ["SAW", "WP", "TOPSIS", "AHP"]
+    col1, col2, col3 = st.columns([1, 2, 1])
 
+    # Simpan metode terakhir di session_state
     if "metode_aktif" not in st.session_state:
-        st.session_state.metode_aktif = metode_list[0]
+        st.session_state.metode_aktif = "SAW"
 
     metode = st.selectbox(
         "**Pilih Metode**",
-        metode_list,
-        index=metode_list.index(st.session_state.metode_aktif),
-        key="pilih_metode"
+        ["SAW", "WP", "TOPSIS", "AHP"],
+        index=["SAW", "WP", "TOPSIS", "AHP"].index(st.session_state.metode_aktif),
+        key="metode_select"
     )
-    st.session_state.metode_aktif = metode
+
+    # Update metode aktif
+    if metode != st.session_state.metode_aktif:
+        st.session_state.metode_aktif = metode
 
 # ============================================================
 # INPUT JUMLAH KRITERIA DAN ALTERNATIF
 # ============================================================
 with st.container():
     st.subheader("Input Dasar")
-
-    # Simpan jumlah kriteria & alternatif di session_state agar tidak reset saat rerun
-    if "n_kriteria" not in st.session_state:
-        st.session_state.n_kriteria = 3
-    if "n_alternatif" not in st.session_state:
-        st.session_state.n_alternatif = 3
-
     col1, col2 = st.columns(2)
     with col1:
-        n_kriteria = st.number_input(
-            "**Jumlah Kriteria**", 1, 10, st.session_state.n_kriteria, key="input_kriteria"
-        )
+        n_kriteria = st.number_input("**Jumlah Kriteria**", 1, 10, 3, key="kriteria")
     with col2:
-        n_alternatif = st.number_input(
-            "**Jumlah Alternatif**", 1, 10, st.session_state.n_alternatif, key="input_alternatif"
-        )
-
-    # Update session_state jika berubah
-    if n_kriteria != st.session_state.n_kriteria:
-        st.session_state.n_kriteria = n_kriteria
-    if n_alternatif != st.session_state.n_alternatif:
-        st.session_state.n_alternatif = n_alternatif
+        n_alternatif = st.number_input("**Jumlah Alternatif**", 1, 10, 3, key="alternatif")
 
 st.markdown("---")
 
@@ -135,69 +122,65 @@ if metode in ["SAW", "WP", "TOPSIS"]:
                 bobot.append(bobot_val)
                 st.session_state.bobot[i] = bobot_val
 
+    st.markdown("### Input Nilai Alternatif x Kriteria")
+
+    # Simpan DataFrame alternatif x kriteria di session_state
     # ============================================================
     # SIMPAN DATAFRAME NILAI ALTERNATIF X KRITERIA
     # ============================================================
-    df_key = f"df_data_{metode}"
-
-    # 🔹 1. Inisialisasi HANYA SEKALI (pertama kali metode digunakan)
-    if df_key not in st.session_state:
-        st.session_state[df_key] = pd.DataFrame(
+    if "df_data" not in st.session_state:
+        st.session_state.df_data = pd.DataFrame(
             [[50.0 for _ in range(n_kriteria)] for _ in range(n_alternatif)],
-            columns=[f"C{i+1}" for i in range(n_kriteria)],
-            index=[f"A{i+1}" for i in range(n_alternatif)],
+            columns=kriteria, index=alternatif
         )
+    else:
+        # Jika jumlah kriteria/alternatif berubah, sesuaikan ukuran tabel
+        old_df = st.session_state.df_data.copy()
 
-    # 🔹 2. Ambil data lama dan sinkronisasi dengan input baru
-    df_data = st.session_state[df_key].copy()
+        # Tambah kolom baru jika ada kriteria baru
+        for k in kriteria:
+            if k not in old_df.columns:
+                old_df[k] = 50.0
 
-    # Jika nama kolom (kriteria) berubah → sinkronisasi bentuk tanpa hapus data lama
-    for k in kriteria:
-        if k not in df_data.columns:
-            df_data[k] = 50.0
-    df_data = df_data[[c for c in df_data.columns if c in kriteria]]
+        # Hapus kolom yang tidak ada di daftar kriteria sekarang
+        old_df = old_df[[c for c in old_df.columns if c in kriteria]]
 
-    # Jika alternatif berubah → sinkronisasi index
-    for a in alternatif:
-        if a not in df_data.index:
-            df_data.loc[a] = [50.0] * len(kriteria)
-    df_data = df_data.loc[[a for a in df_data.index if a in alternatif]]
+        # Tambah baris baru jika ada alternatif baru
+        for a in alternatif:
+            if a not in old_df.index:
+                old_df.loc[a] = [50.0] * len(kriteria)
 
-    # 🔹 3. Simpan kembali hasil sinkronisasi sebelum tampil
-    st.session_state[df_key] = df_data
+        # Hapus baris yang tidak ada di daftar alternatif sekarang
+        old_df = old_df.loc[[a for a in old_df.index if a in alternatif]]
+
+        # Urutkan ulang sesuai urutan input
+        old_df = old_df.reindex(index=alternatif, columns=kriteria)
+
+        st.session_state.df_data = old_df
 
     st.markdown("### Input Nilai Alternatif x Kriteria")
-
-    # 🔹 4. Render editor DENGAN key statis per metode (biar gak re-init tiap rerun)
-    edited_df = st.data_editor(
-        st.session_state[df_key],
+    df = st.data_editor(
+        st.session_state.df_data,
         use_container_width=True,
         num_rows="dynamic",
-        key=f"data_editor_{metode}",
+        key="data_editor"
     )
+    st.session_state.df_data = df
 
-    # 🔹 5. Merge hasil edit ke data lama biar gak hilang baris yang tidak ter-update
-    old_df = st.session_state[df_key].copy()
 
-    # Pastikan ukuran sama
-    for col in old_df.columns:
-        if col not in edited_df.columns:
-            edited_df[col] = old_df[col]
-    for col in edited_df.columns:
-        if col not in old_df.columns:
-            old_df[col] = edited_df[col]
+    if st.button("Hitung", type="primary"):
+        if metode == "SAW":
+            hasil = hitung_saw(df, bobot, tipe)
+        elif metode == "WP":
+            hasil = hitung_wp(df, bobot, tipe)
+        elif metode == "TOPSIS":
+            hasil, solusi_ideal = hitung_topsis(df, bobot, tipe)
+            st.subheader("Solusi Ideal (A⁺ dan A⁻)")
+            st.dataframe(solusi_ideal, use_container_width=True)
 
-    # Merge cell by cell (edited_df lebih prioritas)
-    merged_df = old_df.copy()
-    for r in edited_df.index:
-        for c in edited_df.columns:
-            val = edited_df.at[r, c]
-            if not pd.isna(val):
-                merged_df.at[r, c] = val
-
-    # Update session_state hanya jika berbeda
-    if not merged_df.equals(st.session_state[df_key]):
-        st.session_state[df_key] = merged_df
+        st.subheader("Hasil Perhitungan dan Ranking")
+        styled_df = hasil.style.apply(highlight_rank1, axis=1)
+        st.markdown(styled_df.to_html(), unsafe_allow_html=True)
 
 # ============================================================
 # BAGIAN AHP
