@@ -15,8 +15,14 @@ st.set_page_config(page_title="Kalkulator MCDM", layout="centered")
 # ============================================================
 # HEADER UTAMA
 # ============================================================
-st.title("Aplikasi Pengambilan Keputusan Multi Kriteria (MCDM)")
-st.caption("Metode · SAW · WP · TOPSIS · AHP")
+st.markdown(
+    """
+    <h1 style='text-align: center; color: black;'> Aplikasi Pengambilan Keputusan Multi Kriteria (MCDM) </h1>
+    <p style='text-align: center; color: gray;'> SAW · WP · TOPSIS · AHP </p>
+    """,
+    unsafe_allow_html=True
+)
+
 st.markdown("---")
 
 # ============================================================
