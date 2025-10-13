@@ -1,7 +1,7 @@
 '''
 Nama        : Wa Ode Zachra C., Maritza Ratnamaya N.
 NPM         : 140810230062, 140810230076
-Deskripsi   : Aplikasi kalkulator MCDM berbasis website menggunakan streamlit
+Deskripsi   : Aplikasi kalkulator MADM berbasis website menggunakan streamlit
 '''
 
 import streamlit as st
@@ -17,12 +17,12 @@ def highlight_rank1(row):
         return ['background-color: lightgreen; font-weight: bold'] * len(row)
     return [''] * len(row)
 
-st.set_page_config(page_title="Kalkulator MCDM", layout="centered")
+st.set_page_config(page_title="Kalkulator MADM", layout="centered")
 
 # Headet judul utama
 st.markdown(
     """
-    <h1 style='text-align: center; color: black;'> Aplikasi Pengambilan Keputusan Multi Kriteria (MCDM) </h1>
+    <h1 style='text-align: center; color: black;'> Aplikasi Pengambilan Keputusan Multi Kriteria (MADM) </h1>
     <p style='text-align: center; color: gray;'> SAW · WP · TOPSIS · AHP </p>
     """,
     unsafe_allow_html=True
