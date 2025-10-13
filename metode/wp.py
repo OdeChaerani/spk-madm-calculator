@@ -5,16 +5,15 @@ def hitung_wp(df, bobot, tipe):
     matrix = df.values.astype(float)
     w = np.array(bobot) / np.sum(bobot)
 
-    # hitung log S untuk stabilitas
     log_s = np.zeros(len(matrix))
     for i in range(len(matrix)):
         for j in range(len(w)):
             x = matrix[i, j]
             if x <= 0:
-                x = 1e-9  # jaga keamanan jika ada nol
+                x = 1e-9 
             if tipe[j].lower() == "benefit":
                 log_s[i] += w[j] * np.log(x)
-            else:  # cost
+            else:  
                 log_s[i] += w[j] * np.log(1.0 / x)
 
     s = np.exp(log_s)

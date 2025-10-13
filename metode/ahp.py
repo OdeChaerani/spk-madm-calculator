@@ -16,11 +16,11 @@ def hitung_consistency_ratio(m, priority_vector):
     return cr
 
 def hitung_ahp(kriteria, matriks_kriteria, alternatif, matriks_alternatif):
-    # 1️⃣ Bobot kriteria
+    # Bobot kriteria
     norm_kriteria, bobot_kriteria = normalisasi_matriks(matriks_kriteria)
     cr_kriteria = hitung_consistency_ratio(matriks_kriteria, bobot_kriteria)
 
-    # 2️⃣ Bobot lokal alternatif per kriteria
+    # Bobot lokal alternatif per kriteria
     bobot_alternatif_lokal = []
     cr_alternatif = []
     for k in range(len(kriteria)):
@@ -29,7 +29,7 @@ def hitung_ahp(kriteria, matriks_kriteria, alternatif, matriks_alternatif):
         cr_alt = hitung_consistency_ratio(matriks_alternatif[k], bobot_alt)
         cr_alternatif.append(cr_alt)
 
-    # 3️⃣ Bobot global
+    # Bobot global
     skor_global = []
     for i in range(len(alternatif)):
         total = sum(bobot_alternatif_lokal[j][i] * bobot_kriteria[j] for j in range(len(kriteria)))
@@ -37,7 +37,6 @@ def hitung_ahp(kriteria, matriks_kriteria, alternatif, matriks_alternatif):
 
     ranking = sorted(zip(alternatif, skor_global), key=lambda x: x[1], reverse=True)
 
-    # Output dalam bentuk DataFrame agar cocok dengan Streamlit
     hasil_df = pd.DataFrame({
         "Alternatif": alternatif,
         "Skor": skor_global

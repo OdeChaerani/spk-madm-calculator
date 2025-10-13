@@ -1,3 +1,9 @@
+'''
+Nama        : Wa Ode Zachra C., Maritza Ratnamaya N.
+NPM         : 140810230062, 140810230076
+Deskripsi   : Aplikasi kalkulator MCDM berbasis website menggunakan streamlit
+'''
+
 import streamlit as st
 import pandas as pd
 from metode.saw import hitung_saw
@@ -5,6 +11,7 @@ from metode.wp import hitung_wp
 from metode.topsis import hitung_topsis
 from metode.ahp import hitung_ahp
 
+# Fungsi untuk memberi warna pada kolom hasil
 def highlight_rank1(row):
     if 'Ranking' in row and row['Ranking'] == 1:
         return ['background-color: lightgreen; font-weight: bold'] * len(row)
@@ -12,9 +19,7 @@ def highlight_rank1(row):
 
 st.set_page_config(page_title="Kalkulator MCDM", layout="centered")
 
-# ============================================================
-# HEADER UTAMA
-# ============================================================
+# Headet judul utama
 st.markdown(
     """
     <h1 style='text-align: center; color: black;'> Aplikasi Pengambilan Keputusan Multi Kriteria (MCDM) </h1>
@@ -25,18 +30,14 @@ st.markdown(
 
 st.markdown("---")
 
-# ============================================================
-# PILIHAN METODE
-# ============================================================
+# Box pilihan metode
 with st.container():
     st.subheader("Metode Perhitungan")
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         metode = st.selectbox("*Pilih Metode*", ["SAW", "WP", "TOPSIS", "AHP"])
 
-# ============================================================
-# INPUT JUMLAH KRITERIA DAN ALTERNATIF
-# ============================================================
+# Box input jumlah KRITERIA & ALTERNATIF
 with st.container():
     st.subheader("Input Dasar")
     col1, col2 = st.columns(2)
@@ -47,11 +48,9 @@ with st.container():
 
 st.markdown("---")
 
-# ============================================================
-# INPUT NAMA KRITERIA & ALTERNATIF
-# ============================================================
+# Box input nama KRITERIA & ALTERNATIF
 st.subheader("Nama Kriteria")
-cols_kriteria = st.columns(3)  # tampilkan 3 kolom sejajar
+cols_kriteria = st.columns(3) 
 kriteria = []
 for i in range(n_kriteria):
     with cols_kriteria[i % 3]:
@@ -66,9 +65,7 @@ for i in range(n_alternatif):
         
 st.markdown("---")
 
-# ============================================================
-# BAGIAN SAW / WP / TOPSIS
-# ============================================================
+# Untuk metode SAW / WP / TOPSIS
 if metode in ["SAW", "WP", "TOPSIS"]:
     st.subheader("Input Tipe & Bobot Kriteria")
     with st.expander("Tipe & Bobot Kriteria", expanded=True):
@@ -102,9 +99,7 @@ if metode in ["SAW", "WP", "TOPSIS"]:
         styled_df = hasil.style.apply(highlight_rank1, axis=1)
         st.markdown(styled_df.to_html(), unsafe_allow_html=True)
 
-# ============================================================
-# BAGIAN AHP
-# ============================================================
+# Untuk metode AHP
 elif metode == "AHP":
     st.subheader("Tipe Kriteria")
     tipe = [st.selectbox(f"Tipe {kriteria[i]}", ["Benefit", "Cost"], key=f"type{i}") for i in range(n_kriteria)]
